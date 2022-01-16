@@ -1,9 +1,13 @@
+from urllib.error import URLError
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
+import pandas as pd
 
 base = 'https://www.lojasrenner.com.br/c/masculino/-/N-1xeiyoy'
 links = []
 n = 0
+all_products = []
+all_price = []
 html = Request(base, headers={'User-Agent': 'Mozilla/5.0'})
 url = urlopen(html)
 bs = BeautifulSoup(url, "html5lib")
@@ -15,19 +19,29 @@ for link in bs.find_all('a', {'class': 'ProductBox_productBox__1QP1S'}):
 raw_data = bs.find_all('span', {'class': 'ProductBox_title__s2Ufj'})
 
 def get_information(n):
-    html_base = 'https://www.lojasrenner.com.br'
-    target = (html_base + links[n])
-    print(target)
-    site = Request(target, headers={'User-Agent': 'Mozilla/5.0'})
-    url_target = urlopen(target)
-    bs = BeautifulSoup(url_target, "html5lib")
-    product_name = bs.find_all('h1', {'class': 'product_name'})
-    product_price = bs.find_all('span', {'class': 'best_price'})
-    for product in product_name:
-        for price in product_price:
-            print(f'Produto: {product.get_text().lstrip()}\nPreço: {price.text}')
+    try:
+        html_base = 'https://www.lojasrenner.com.br'
+        target = (html_base + links[n])
+        print(f'Coletando informações pag: {n}...')
+        site = Request(target, headers={'User-Agent': 'Mozilla/5.0'})
+        url_target = urlopen(target)
+        bs = BeautifulSoup(url_target, "html5lib")
+        product_name = bs.find_all('h1', {'class': 'product_name'})
+        product_price = bs.find_all('span', {'class': 'best_price'})
+        for raw_product in product_name:
+            for raw_price in product_price:
+                product = raw_product.text.lstrip()
+                price = raw_price.text
+                all_products.append(product)
+                all_price.append(price)
+    except URLError:
+        get_information(n)
+            
+            
 
 while n < len(links):
     get_information(n)
-    print(links[n])
     n += 1
+
+table = pd.DataFrame(list(zip(all_products, all_price)), columns=['Produto', 'Valor'])
+print(table)
