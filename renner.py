@@ -2,27 +2,33 @@ from urllib.error import URLError
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 import pandas as pd
+import csv
 
 base = 'https://www.lojasrenner.com.br/c/masculino/-/N-1xeiyoy'
+next_page = '?page='
 links = []
 n = 0
+number_pages = 2
 all_products = []
 all_price = []
-html = Request(base, headers={'User-Agent': 'Mozilla/5.0'})
-url = urlopen(html)
-bs = BeautifulSoup(url, "html5lib")
-#print(bs.prettify())
-#links dos produtos
-for link in bs.find_all('a', {'class': 'ProductBox_productBox__1QP1S'}):
-    links.append(link.get('href'))
 
-raw_data = bs.find_all('span', {'class': 'ProductBox_title__s2Ufj'})
+def request_html(base, number):
+    try:
+        page = str(number)
+        new_target = str(base + '?page=' + page)
+        html = Request(base, headers={'User-Agent': 'Mozilla/5.0'})
+        url = urlopen(html).read()
+        bs = BeautifulSoup(url, "html5lib")
+        #links dos produtos
+        for link in bs.find_all('a', {'class': 'ProductBox_productBox__1QP1S'}):
+            links.append(link.get('href'))
+    except URLError:
+        request_html(base, number_pages)
 
 def get_information(n):
     try:
         html_base = 'https://www.lojasrenner.com.br'
         target = (html_base + links[n])
-        print(f'Coletando informações pag: {n}...')
         site = Request(target, headers={'User-Agent': 'Mozilla/5.0'})
         url_target = urlopen(target)
         bs = BeautifulSoup(url_target, "html5lib")
@@ -34,14 +40,21 @@ def get_information(n):
                 price = raw_price.text
                 all_products.append(product)
                 all_price.append(price)
+                table = pd.DataFrame(list(zip(all_products, all_price)), columns=['Produto', 'Valor'])
+                print(table)
+                table.to_csv('products_renner.csv', '\t', encoding='Latin1', index=False)
     except URLError:
         get_information(n)
             
-            
-
+html = Request(base, headers={'User-Agent': 'Mozilla/5.0'})
+url = urlopen(html)
+bs = BeautifulSoup(url, "html5lib")
+#links dos produtos
+for link in bs.find_all('a', {'class': 'ProductBox_productBox__1QP1S'}):
+    links.append(link.get('href'))
+    
 while n < len(links):
+    request_html(base, number_pages)
     get_information(n)
     n += 1
-
-table = pd.DataFrame(list(zip(all_products, all_price)), columns=['Produto', 'Valor'])
-print(table)
+    number_pages += 1
