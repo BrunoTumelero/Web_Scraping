@@ -42,7 +42,7 @@ def get_information(n):
                 all_price.append(price)
                 table = pd.DataFrame(list(zip(all_products, all_price)), columns=['Produto', 'Valor'])
                 print(table)
-                table.to_csv('products_renner.csv', '\t', encoding='Latin1', index=False)
+                table.to_csv('products_renner.csv', '\t', encoding='utf8', index=False)
     except URLError:
         get_information(n)
             
@@ -52,7 +52,7 @@ bs = BeautifulSoup(url, "html5lib")
 #links dos produtos
 for link in bs.find_all('a', {'class': 'ProductBox_productBox__1QP1S'}):
     links.append(link.get('href'))
-    
+
 while n < len(links):
     request_html(base, number_pages)
     get_information(n)
