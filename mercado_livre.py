@@ -4,26 +4,20 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-
-base = 'https://www.mercadolivre.com.br/'
-res = requests.get(base)
-bs = BeautifulSoup(res.text, 'html5lib')
-links_utils = []
+pags = []
 category = {}
 product = []
 price = []
 discont = []
-n = 0
+n = 1
 
 def next_pages(n):
-    all_category = str(f'https://www.mercadolivre.com.br/ofertas?page={n}')
-    conn_next_page = requests.get(all_category)
-    np = BeautifulSoup(conn_next_page.text, 'html5lib')
-    for link in np.find_all('li', {'class': 'andes-pagination__button'}):
-        print('Pagina: ', all_category)
+    all_pages = f'https://www.mercadolivre.com.br/ofertas?page={n}'
+    conn_next_page = requests.get(all_pages)
+    pags.append(all_pages)
 
 def colect(n):
-    pag = str(f'https://www.mercadolivre.com.br/ofertas?page={n}')
+    pag = f'https://www.mercadolivre.com.br/ofertas?page={n}'
     connect_pag = requests.get(pag)
     site = BeautifulSoup(connect_pag.text, 'html5lib')
     print('Target: ', pag)
@@ -36,22 +30,17 @@ def colect(n):
 
     table = pd.DataFrame(list(zip(product, price, discont)), columns= ['Produtos', 'Preço', 'Desconto'])
     table.to_csv('products_mercado_livre.csv', '\t', 'utf8', index=False)
-
+#coleted category
 pag = str(f'https://www.mercadolivre.com.br/ofertas?page={n}')
 connect_pag = requests.get(pag)
 tg = BeautifulSoup(connect_pag.text, 'html5lib')
 for cat in tg.find_all('a', {'class': 'list_element'}):
     category[cat.text] = cat.get('href')
-    print(category)
-'''v = 1
-while v:
-    if n in 
-    try:
+
+next_pages(n)
+if n <= len(pags):
+    while 1:
+        next_pages(n)
         colect(n)
         n += 1
-    except:
-        v = 0'''
-
-
-            
             
